@@ -1,18 +1,29 @@
+
 package com.example.quotecollector
 
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
+import androidx.compose.foundation.layout.*
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
+import androidx.compose.material3.*
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.NavType
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import androidx.navigation.navArgument
 import com.example.quotecollector.ui.theme.QuoteCollectorTheme
 
 class MainActivity : ComponentActivity() {
+
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
@@ -22,10 +33,125 @@ class MainActivity : ComponentActivity() {
                     modifier = Modifier.fillMaxSize(),
                     color = MaterialTheme.colorScheme.background
                 ) {
-                    Greeting("Android")
+                    NavControl()
+                    //MyCollectionScreen()
+                    //HomeScreen()
+                    //Greeting("Android")
                 }
             }
         }
+    }
+}
+
+
+@Composable
+fun NavControl() {
+    val navController = rememberNavController()
+
+    NavHost(navController = navController, startDestination = Destination.Home.route) {
+        composable(Destination.Home.route) {
+            HomeScreen(navController)
+        }
+        composable(Destination.ExploreCategory.route) {
+            CategoryScreen()
+        }
+        composable(Destination.ExploreList.route) {
+            ExploreScreen()
+        }
+        composable(Destination.MyCollection.route) {
+            MyCollectionScreen()
+        }
+        composable(Destination.Details.route, arguments = listOf(
+            navArgument("id") {
+                type = NavType.IntType
+                this.nullable = false
+            }
+        )) {
+            //TODO quote detail view
+        }
+    }
+}
+
+@Composable
+fun HomeScreen(navController: NavController) {
+    Column() {
+        Button(onClick = { navController.navigate(Destination.ExploreCategory.route) }) {
+            Text(text = "Categories")
+        }
+
+        Button(onClick = { navController.navigate(Destination.ExploreList.route) }) {
+            Text(text = "Explore list")
+        }
+
+        Button(onClick = { navController.navigate(Destination.MyCollection.route) }) {
+            Text(text = "My Collection")
+        }
+
+
+    }
+}
+
+@Composable
+fun CategoryScreen() {
+    Column() {
+        Button(onClick = { /*TODO*/ }) {
+            Text(text = "Art")
+        }
+
+        Button(onClick = { /*TODO*/ }) {
+            Text(text = "Politics")
+        }
+
+        Button(onClick = { /*TODO*/ }) {
+            Text(text = "Science")
+        }
+    }
+}
+
+@Composable
+fun ExploreScreen(quotes: List<Int> = List(10) {it}) {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally // ,verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        ExploreQuotesList(modifier = Modifier.weight(1f))
+        RefreshButton(modifier = Modifier.padding(25.dp))
+    }
+}
+
+@Composable
+fun ExploreQuotesList(modifier: Modifier = Modifier, quotes: List<Int> = List(50) {it}) {
+    LazyColumn(modifier = modifier) {
+        items(items = quotes) {
+            Text(text = it.toString())
+        }
+    }
+}
+
+@Composable
+fun MyCollectionScreen() {
+    Column(
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally // ,verticalArrangement = Arrangement.SpaceBetween
+    ) {
+        MyQuotesList(modifier = Modifier.weight(1f))
+        //RefreshButton(modifier = Modifier.padding(25.dp))
+    }
+}
+
+@Composable
+fun MyQuotesList(modifier: Modifier = Modifier, quotes: List<Int> = List(44) {it}) {
+    LazyColumn(modifier = modifier) {
+        items(items = quotes) {
+            Text(text = it.toString())
+        }
+    }
+}
+
+@Composable
+fun RefreshButton(modifier: Modifier = Modifier,) {
+    Button(modifier = modifier, onClick = { /*TODO*/ }) {
+        Text(text = "REFRESH")
     }
 }
 
