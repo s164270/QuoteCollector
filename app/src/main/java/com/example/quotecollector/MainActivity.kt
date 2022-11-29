@@ -2,7 +2,6 @@
 package com.example.quotecollector
 
 import android.os.Bundle
-import android.util.Log
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.clickable
@@ -28,21 +27,15 @@ import com.example.quotecollector.ui.theme.QuoteCollectorTheme
 class MainActivity : ComponentActivity() {
 
     val collectionViewModel = CollectionViewModel()
+    val exploreViewModel = ExploreViewModel()
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             QuoteCollectorTheme {
+                NavControl(collectionViewModel, exploreViewModel)
                 // A surface container using the 'background' color from the theme
-                Surface(
-                    modifier = Modifier.fillMaxSize(),
-                    color = MaterialTheme.colorScheme.background
-                ) {
-                    NavControl(collectionViewModel)
-                    //MyCollectionScreen()
-                    //HomeScreen()
-                    //Greeting("Android")
-                }
+                //Surface(modifier = Modifier.fillMaxSize(),color = MaterialTheme.colorScheme.background) {}
             }
         }
     }
@@ -50,18 +43,23 @@ class MainActivity : ComponentActivity() {
 
 
 @Composable
-fun NavControl(collectionViewModel: CollectionViewModel) {
+fun NavControl(collectionViewModel: CollectionViewModel, exploreViewModel: ExploreViewModel) {
     val navController = rememberNavController()
 
     NavHost(navController = navController, startDestination = Destination.Home.route) {
         composable(Destination.Home.route) {
             HomeScreen(navController)
         }
-        composable(Destination.ExploreCategory.route) {
-            CategoryScreen()
+        composable(Destination.SelectCategory.route) {
+            CategoryScreen(exploreViewModel) {x -> navController.navigate(Destination.ExploreList.exploreCategory(x))}
         }
-        composable(Destination.ExploreList.route) {
-            ExploreScreen()
+        composable(Destination.ExploreList.route, arguments = listOf(
+            navArgument("category") {
+                type = NavType.StringType
+                this.nullable = false
+            }
+        )) {
+            ExploreScreen(exploreViewModel, it.arguments?.getString("category") ?: "")
         }
         composable(Destination.MyCollection.route) {
             MyCollectionScreen(collectionViewModel)
@@ -79,8 +77,8 @@ fun NavControl(collectionViewModel: CollectionViewModel) {
 
 @Composable
 fun HomeScreen(navController: NavController) {
-    Column() {
-        Button(onClick = { navController.navigate(Destination.ExploreCategory.route) }) {
+    Column(modifier = Modifier.padding(15.dp)) {
+        Button(onClick = { navController.navigate(Destination.SelectCategory.route) }) {
             Text(text = "Categories")
         }
 
@@ -91,45 +89,35 @@ fun HomeScreen(navController: NavController) {
         Button(onClick = { navController.navigate(Destination.MyCollection.route) }) {
             Text(text = "My Collection")
         }
-
-
     }
 }
 
 @Composable
-fun CategoryScreen() {
+fun CategoryScreen(exploreViewModel: ExploreViewModel, navToCategory: (cat: String) -> (Unit)) {
     Column() {
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = { navToCategory("Art") }) {
             Text(text = "Art")
         }
 
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = { navToCategory("Politics") }) {
             Text(text = "Politics")
         }
 
-        Button(onClick = { /*TODO*/ }) {
+        Button(onClick = { navToCategory("Science") }) {
             Text(text = "Science")
         }
     }
 }
 
 @Composable
-fun ExploreScreen(quotes: List<Int> = List(10) {it}) {
+fun ExploreScreen(exploreViewModel: ExploreViewModel, category: String) {
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally // ,verticalArrangement = Arrangement.SpaceBetween
     ) {
-        ExploreQuotesList(modifier = Modifier.weight(1f))
-        RefreshButton(modifier = Modifier.padding(25.dp))
-    }
-}
-
-@Composable
-fun ExploreQuotesList(modifier: Modifier = Modifier, quotes: List<Int> = List(50) {it}) {
-    LazyColumn(modifier = modifier) {
-        items(items = quotes) {
-            Text(text = it.toString())
-        }
+        Text(text = "Explore quotes related to $category")
+        QuotesList(modifier = Modifier.weight(1f), quotes = exploreViewModel.quotes){}
+        RefreshButton(modifier = Modifier.padding(25.dp)){exploreViewModel.refreshDummy("Art")}
     }
 }
 
@@ -139,18 +127,18 @@ fun MyCollectionScreen(collectionViewModel: CollectionViewModel) {
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally // ,verticalArrangement = Arrangement.SpaceBetween
     ) {
-        MyQuotesList(
+        QuotesList(
             modifier = Modifier.weight(1f),
-            quotes = collectionViewModel.quotes) { qId -> collectionViewModel.removeQuote(qId) }
+            quotes = collectionViewModel.quotes)
+        { qId -> collectionViewModel.removeQuote(qId) }
         //RefreshButton(modifier = Modifier.padding(25.dp))
     }
 }
 
 @Composable
-fun MyQuotesList(modifier: Modifier = Modifier, quotes: List<Quote>, onClick: (qId: Int) -> Unit) {
-    val context = LocalContext.current
+fun QuotesList(modifier: Modifier = Modifier, quotes: List<Quote>, onClick: (qId: Int) -> Unit) {
     LazyColumn(modifier = modifier) {
-        items(items = quotes,key = {it.id}) {
+        items(items = quotes,key = {it.id}) { 
             Surface(
                 modifier = Modifier
                     .padding(5.dp)
@@ -169,8 +157,8 @@ fun MyQuotesList(modifier: Modifier = Modifier, quotes: List<Quote>, onClick: (q
 }
 
 @Composable
-fun RefreshButton(modifier: Modifier = Modifier,) {
-    Button(modifier = modifier, onClick = { /*TODO*/ }) {
+fun RefreshButton(modifier: Modifier = Modifier, clickRefresh: () -> Unit) {
+    Button(modifier = modifier, onClick = { clickRefresh() }) {
         Text(text = "REFRESH")
     }
 }
